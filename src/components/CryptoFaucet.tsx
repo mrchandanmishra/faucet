@@ -1,28 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { Coins, Droplets, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
-const CryptoFaucet = () => {
-  const [selectedAsset, setSelectedAsset] = useState('BTC');
-  const [walletAddress, setWalletAddress] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [claims, setClaims] = useState({});
-  const [lastClaim, setLastClaim] = useState({});
-  const [notification, setNotification] = useState(null);
+// Type definitions
+interface CryptoAsset {
+  name: string;
+  amount: string;
+  cooldown: number;
+  color: string;
+}
+
+interface CryptoAssets {
+  [key: string]: CryptoAsset;
+}
+
+interface Claims {
+  [key: string]: number;
+}
+
+interface LastClaim {
+  [key: string]: number;
+}
+
+interface Notification {
+  type: 'success' | 'error';
+  message: string;
+}
+
+type AssetSymbol = 'USDT' | 'USDC' | 'ETH' | 'SHIB' | 'TREAT';
+
+const CryptoFaucet: React.FC = () => {
+  const [selectedAsset, setSelectedAsset] = useState<AssetSymbol>('USDT');
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [claims, setClaims] = useState<Claims>({});
+  const [lastClaim, setLastClaim] = useState<LastClaim>({});
+  const [notification, setNotification] = useState<Notification | null>(null);
 
   // Crypto assets with their details
-  const cryptoAssets = {
-    BTC: { name: 'Bitcoin', amount: '0.001', cooldown: 24, color: 'orange' },
-    ETH: { name: 'Ethereum', amount: '0.01', cooldown: 12, color: 'blue' },
-    LTC: { name: 'Litecoin', amount: '0.1', cooldown: 8, color: 'silver' },
-    DOGE: { name: 'Dogecoin', amount: '50', cooldown: 6, color: 'yellow' },
-    ADA: { name: 'Cardano', amount: '5', cooldown: 4, color: 'blue' },
-    DOT: { name: 'Polkadot', amount: '1', cooldown: 6, color: 'pink' },
-    MATIC: { name: 'Polygon', amount: '10', cooldown: 2, color: 'purple' },
-    SOL: { name: 'Solana', amount: '0.05', cooldown: 8, color: 'purple' }
+  const cryptoAssets: CryptoAssets = {
+    USDT: { name: 'USDT', amount: '0.001', cooldown: 8, color: 'orange' },
+    USDC: { name: 'USDC', amount: '0.01', cooldown: 8, color: 'blue' },
+    ETH: { name: 'Ethereum', amount: '0.1', cooldown: 8, color: 'silver' },
+    SHIB: { name: 'Shib', amount: '50', cooldown: 8, color: 'yellow' },
+    TREAT: { name: 'Treat', amount: '0.05', cooldown: 8, color: 'purple' }
   };
 
   // Check if user can claim (cooldown period)
-  const canClaim = (asset) => {
+  const canClaim = (asset: AssetSymbol): boolean => {
     if (!lastClaim[asset]) return true;
     const timeDiff = Date.now() - lastClaim[asset];
     const cooldownMs = cryptoAssets[asset].cooldown * 60 * 60 * 1000; // Convert hours to ms
@@ -30,7 +54,7 @@ const CryptoFaucet = () => {
   };
 
   // Get remaining cooldown time
-  const getRemainingTime = (asset) => {
+  const getRemainingTime = (asset: AssetSymbol): string | null => {
     if (!lastClaim[asset] || canClaim(asset)) return null;
     const timeDiff = Date.now() - lastClaim[asset];
     const cooldownMs = cryptoAssets[asset].cooldown * 60 * 60 * 1000;
@@ -41,16 +65,17 @@ const CryptoFaucet = () => {
   };
 
   // Handle faucet claim
-  const handleClaim = async () => {
+  const handleClaim = async (): Promise<void> => {
     if (!walletAddress.trim()) {
       setNotification({ type: 'error', message: 'Please enter a wallet address' });
       return;
     }
 
     if (!canClaim(selectedAsset)) {
+      const remainingTime = getRemainingTime(selectedAsset);
       setNotification({ 
         type: 'error', 
-        message: `Please wait ${getRemainingTime(selectedAsset)} before claiming ${selectedAsset} again` 
+        message: `Please wait ${remainingTime} before claiming ${selectedAsset} again` 
       });
       return;
     }
@@ -59,8 +84,8 @@ const CryptoFaucet = () => {
 
     // Simulate API call
     setTimeout(() => {
-      const newClaims = { ...claims };
-      const newLastClaim = { ...lastClaim };
+      const newClaims: Claims = { ...claims };
+      const newLastClaim: LastClaim = { ...lastClaim };
       
       if (!newClaims[selectedAsset]) newClaims[selectedAsset] = 0;
       newClaims[selectedAsset] += parseFloat(cryptoAssets[selectedAsset].amount);
@@ -93,10 +118,12 @@ const CryptoFaucet = () => {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <Droplets className="w-12 h-12 text-orange-400 mr-3" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">Multi-Asset Crypto Faucet</h1>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
+             Position Exchange Faucet
+            </h1>
           </div>
           <p className="text-gray-300 text-lg">
-            Claim free testnet cryptocurrencies for development and testing
+          Claim your testnet assets to explore Position Exchange
           </p>
         </div>
 
@@ -116,19 +143,19 @@ const CryptoFaucet = () => {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          {/* Asset Selection */}
+        <div className="space-y-8">
+          {/* Asset Selection Section */}
           <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-700/50">
             <h2 className="text-2xl font-bold text-gray-100 mb-6 flex items-center">
               <Coins className="w-6 h-6 mr-2 text-orange-400" />
               Select Asset
             </h2>
             
-            <div className="grid grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               {Object.entries(cryptoAssets).map(([symbol, asset]) => (
                 <button
                   key={symbol}
-                  onClick={() => setSelectedAsset(symbol)}
+                  onClick={() => setSelectedAsset(symbol as AssetSymbol)}
                   className={`p-4 rounded-lg border transition-all duration-200 ${
                     selectedAsset === symbol
                       ? 'bg-orange-600/20 border-orange-400/50 text-orange-100 shadow-lg shadow-orange-500/20'
@@ -138,7 +165,7 @@ const CryptoFaucet = () => {
                   <div className="font-bold text-lg">{symbol}</div>
                   <div className="text-sm opacity-80">{asset.name}</div>
                   <div className="text-xs mt-1">{asset.amount} {symbol}</div>
-                  <div className="text-xs mt-1 flex items-center">
+                  <div className="text-xs mt-1 flex items-center justify-center">
                     <Clock className="w-3 h-3 mr-1" />
                     {asset.cooldown}h cooldown
                   </div>
@@ -147,9 +174,9 @@ const CryptoFaucet = () => {
             </div>
           </div>
 
-          {/* Claim Interface */}
-          <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-700/50">
-            <h2 className="text-2xl font-bold text-gray-100 mb-6">
+          {/* Claim Interface Section */}
+          <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-700/50 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-100 mb-6 text-center">
               Claim {selectedAsset}
             </h2>
             
@@ -161,7 +188,7 @@ const CryptoFaucet = () => {
                 <input
                   type="text"
                   value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWalletAddress(e.target.value)}
                   placeholder="Enter your wallet address"
                   className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400/50"
                 />
@@ -216,13 +243,13 @@ const CryptoFaucet = () => {
         {Object.keys(claims).length > 0 && (
           <div className="mt-8 bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-700/50">
             <h2 className="text-2xl font-bold text-gray-100 mb-4">Your Claims</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               {Object.entries(claims).map(([asset, amount]) => (
                 <div key={asset} className="bg-gray-800/30 rounded-lg p-4 text-center border border-gray-700/30">
                   <div className="font-bold text-lg text-gray-100">{asset}</div>
                   <div className="text-orange-300 font-medium">{amount.toFixed(6)}</div>
                   <div className="text-xs text-gray-400 mt-1">
-                    {cryptoAssets[asset].name}
+                    {cryptoAssets[asset as AssetSymbol]?.name || 'Unknown'}
                   </div>
                 </div>
               ))}
