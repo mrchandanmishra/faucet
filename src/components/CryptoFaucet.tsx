@@ -113,6 +113,11 @@ const CryptoFaucet: React.FC = () => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
+  const isValidAsset = (asset: string): boolean => {
+    const validAssets = ['BONE', 'SHIB', 'TREAT', 'USDT', 'USDC', 'ETH'];
+    return validAssets.includes(asset.toUpperCase());
+  };
+
   const handleClaim = async (): Promise<void> => {
     if (!walletAddress.trim()) {
       setNotification({ type: 'error', message: 'Please enter a wallet address' });
@@ -202,7 +207,7 @@ const CryptoFaucet: React.FC = () => {
           <div className="flex items-center justify-center mb-4">
             <Droplets className="w-12 h-12 text-orange-400 mr-3" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
-              Shibarium Testnet Faucet
+              Positions Exchange Testnet Faucet
             </h1>
           </div>
           <p className="text-gray-300 text-lg">
@@ -259,7 +264,7 @@ const CryptoFaucet: React.FC = () => {
                 Select Asset
               </h2>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {assets.map((asset) => (
                   <button
                     key={asset.symbol}
